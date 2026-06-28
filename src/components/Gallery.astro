@@ -1,0 +1,41 @@
+---
+/**
+ * Instagram-style image grid near the footer. Falls back to elegant
+ * placeholder tiles when no gallery images are configured yet.
+ */
+import Reveal from './Reveal.astro';
+import type { GalleryImage } from '../lib/content';
+
+export interface Props {
+  images: GalleryImage[];
+}
+const { images } = Astro.props;
+
+// Default tiles shown until real photos are uploaded in /admin.
+const placeholders = [
+  { src: '/images/gallery-1.jpg', alt: 'Pehmeät laineet ja kiharat' },
+  { src: '/images/gallery-2.jpg', alt: 'Letti ja kampaus' },
+  { src: '/images/gallery-3.jpg', alt: 'Salon Janikan tunnelmallinen sisätila' },
+  { src: '/images/gallery-4.jpg', alt: 'Kiharoiden muotoilua' },
+];
+
+const tiles =
+  images.length > 0
+    ? images.map((g) => ({ src: g.url, alt: g.alt || 'Salon Janika' }))
+    : placeholders;
+---
+
+<div class="grid grid-cols-2 md:grid-cols-4">
+  {tiles.map((t, i) => (
+    <Reveal class="group relative aspect-square overflow-hidden bg-soft" delay={i * 60}>
+      <img
+        src={t.src}
+        alt={t.alt}
+        loading="lazy"
+        decoding="async"
+        class="photo-hover w-full h-full object-cover transition-transform duration-[1.2s] ease-[var(--ease-soft)] group-hover:scale-105"
+      />
+      <span class="absolute inset-0 ring-1 ring-inset ring-cream/40"></span>
+    </Reveal>
+  ))}
+</div>

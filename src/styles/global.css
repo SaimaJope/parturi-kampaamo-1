@@ -1,0 +1,236 @@
+@import 'tailwindcss';
+
+/* ───────────────────────────────────────────────────────────────
+   Salon Janika — luxury-minimal design tokens
+   Warm neutrals, monochrome with a whisper of champagne gold
+   (gold harmonises with the existing "Salon Janika" wordmark).
+   ─────────────────────────────────────────────────────────────── */
+@theme {
+  /* Palette */
+  --color-ink: #1c1a17; /* warm black — text + dark sections */
+  --color-ink-soft: #3a3631; /* muted ink for secondary text */
+  --color-cream: #f5f0e8; /* page background */
+  --color-soft: #fcfaf6; /* cards / soft white */
+  --color-taupe: #c9beb0; /* warm taupe rule/divider accent */
+  --color-taupe-deep: #a99a86; /* deeper taupe for borders on light */
+  --color-gold: #b8995e; /* muted champagne gold accent */
+  --color-gold-soft: #d8c39a; /* light gold for hairlines */
+
+  /* Typography */
+  --font-script: 'Pinyon Script', cursive;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Jost', ui-sans-serif, system-ui, sans-serif;
+
+  /* Fluid type scale */
+  --text-hero: clamp(3rem, 12vw, 9rem);
+  --text-display: clamp(2.25rem, 6vw, 4.5rem);
+  --text-section: clamp(1.75rem, 4vw, 3rem);
+
+  /* Easing */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Fonts: loaded via <link preload> in BaseLayout for performance ── */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  /* Visible, on-brand focus states for keyboard users (a11y) */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-soft);
+  }
+
+  /* Respect reduced motion globally */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Script accent word — large, calligraphic, used sparingly */
+  .script {
+    font-family: var(--font-script);
+    font-weight: 400;
+    line-height: 0.9;
+    color: var(--color-gold);
+  }
+
+  /* Uppercase tracked label — nav, eyebrows, button text */
+  .eyebrow {
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--color-ink-soft);
+  }
+
+  /* Thin hairline divider */
+  .rule {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--color-taupe-deep),
+      transparent
+    );
+    opacity: 0.5;
+  }
+
+  /* Restrained buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.74rem;
+    font-weight: 400;
+    padding: 1.05rem 2.4rem;
+    border-radius: 999px;
+    transition: all 0.5s var(--ease-soft);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-solid {
+    background: var(--color-ink);
+    color: var(--color-soft);
+    border: 1px solid var(--color-ink);
+  }
+  .btn-solid:hover {
+    background: transparent;
+    color: var(--color-ink);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+  }
+  .btn-outline:hover {
+    background: var(--color-ink);
+    color: var(--color-soft);
+  }
+
+  /* Light variant for dark sections */
+  .btn-light {
+    background: var(--color-soft);
+    color: var(--color-ink);
+    border: 1px solid var(--color-soft);
+  }
+  .btn-light:hover {
+    background: transparent;
+    color: var(--color-soft);
+  }
+
+  /* Standard content width */
+  .container-prose {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  .container-wide {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+}
+
+@layer utilities {
+  /* Editorial B&W photo treatment — unifies all photography into a calm,
+     monochrome, luxury palette regardless of the source image. */
+  .photo {
+    filter: grayscale(100%) contrast(1.04) brightness(1.01);
+  }
+  /* Gallery tiles: subtle colour reveal on hover (desktop). */
+  .photo-hover {
+    filter: grayscale(100%) contrast(1.03);
+    transition: filter 1.1s var(--ease-soft);
+  }
+  .group:hover .photo-hover {
+    filter: grayscale(0%) contrast(1);
+  }
+
+  /* Scroll-reveal: elements start hidden, .is-visible reveals them.
+     JS adds .is-visible via IntersectionObserver (see Reveal.astro). */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 1s var(--ease-soft),
+      transform 1s var(--ease-soft);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Slow ken-burns drift for hero imagery */
+  .ken-burns {
+    animation: kenburns 24s var(--ease-soft) infinite alternate;
+  }
+  @keyframes kenburns {
+    from {
+      transform: scale(1) translate(0, 0);
+    }
+    to {
+      transform: scale(1.12) translate(-1.5%, -1.5%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+    .ken-burns {
+      animation: none;
+    }
+  }
+}

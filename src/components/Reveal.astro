@@ -1,0 +1,17 @@
+---
+/**
+ * Scroll-reveal wrapper. Adds .reveal; BaseLayout's IntersectionObserver
+ * adds .is-visible when it enters the viewport. Reduced-motion safe.
+ */
+export interface Props {
+  as?: keyof HTMLElementTagNameMap;
+  delay?: number; // ms
+  class?: string;
+}
+const { as: Tag = 'div', delay = 0, class: className = '' } = Astro.props;
+const style = delay ? `transition-delay:${delay}ms` : undefined;
+---
+
+<Tag class:list={['reveal', className]} style={style}>
+  <slot />
+</Tag>

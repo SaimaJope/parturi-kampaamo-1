@@ -1,0 +1,38 @@
+---
+/**
+ * Editorial section title: small uppercase eyebrow + large serif heading,
+ * with an optional calligraphic script accent word used sparingly.
+ */
+export interface Props {
+  eyebrow?: string;
+  /** Plain serif part of the title. */
+  title?: string;
+  /** Calligraphic script accent (rendered large in gold). */
+  script?: string;
+  align?: 'left' | 'center';
+  /** Heading level for semantics. */
+  level?: 'h1' | 'h2';
+  class?: string;
+}
+const {
+  eyebrow,
+  title,
+  script,
+  align = 'center',
+  level = 'h2',
+  class: className = '',
+} = Astro.props;
+const Heading = level;
+const alignCls = align === 'center' ? 'items-center text-center' : 'items-start text-left';
+---
+
+<div class:list={['flex flex-col', alignCls, className]}>
+  {eyebrow && <span class="eyebrow mb-5">{eyebrow}</span>}
+  <Heading class="font-serif leading-[0.95]" style="font-size:var(--text-section)">
+    {script && (
+      <span class="script block text-[1.7em] leading-[0.8] mb-1">{script}</span>
+    )}
+    {title}
+  </Heading>
+  {align === 'center' && <div class="rule max-w-[5rem] mt-7"></div>}
+</div>

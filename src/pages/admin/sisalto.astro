@@ -1,0 +1,256 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../lib/auth';
+import { getServiceClient, hasServiceRole } from '../../lib/supabase';
+import { getContent } from '../../lib/content';
+import type { ContentKey } from '../../lib/defaults';
+
+export const prerender = false;
+
+const admin = await requireAdmin(Astro.cookies);
+if (!admin) return Astro.redirect('/admin/login');
+
+const done = Astro.url.searchParams.get('done');
+const error = Astro.url.searchParams.get('error');
+
+// Current content (merged with defaults) so every field has a value.
+const content = await getContent();
+
+// Editable content fields, grouped for the UI.
+const textFields: { group: string; fields: { key: ContentKey; label: string; type: 'text' | 'textarea' }[] }[] = [
+  {
+    group: 'Etusivu',
+    fields: [
+      { key: 'hero_tagline', label: 'Hero-tagline', type: 'text' },
+      { key: 'etusivu_body', label: 'Esittelyteksti', type: 'textarea' },
+      { key: 'contact_welcome', label: 'Tervetuloa-teksti', type: 'text' },
+    ],
+  },
+  {
+    group: 'Hinnasto',
+    fields: [
+      { key: 'hinnasto_lead', label: 'Johdantolause', type: 'text' },
+      { key: 'hinnasto_perm_note', label: 'Permanentti-huomautus', type: 'text' },
+      { key: 'hinnasto_footnote_1', label: 'Alaviite 1', type: 'text' },
+      { key: 'hinnasto_footnote_2', label: 'Alaviite 2', type: 'text' },
+    ],
+  },
+  {
+    group: 'Yhteystiedot & ajanvaraus',
+    fields: [
+      { key: 'yhteystiedot_location', label: 'Sijaintiteksti', type: 'text' },
+      { key: 'ajanvaraus_intro', label: 'Ajanvarauksen johdanto', type: 'textarea' },
+    ],
+  },
+  {
+    group: 'Aukioloajat & yhteystiedot',
+    fields: [
+      { key: 'open_weekday', label: 'Aukiolo (arki)', type: 'text' },
+      { key: 'open_saturday', label: 'Aukiolo (lauantai)', type: 'text' },
+      { key: 'footer_hours', label: 'Footer-aukiolo', type: 'text' },
+      { key: 'phone', label: 'Puhelin (linkki)', type: 'text' },
+      { key: 'phone_display', label: 'Puhelin (näytettävä)', type: 'text' },
+      { key: 'address_street', label: 'Katuosoite', type: 'text' },
+      { key: 'address_postal', label: 'Postinumero ja kaupunki', type: 'text' },
+      { key: 'address_area', label: 'Kaupunginosa', type: 'text' },
+    ],
+  },
+];
+
+// Prices + gallery (live from DB).
+interface PriceRow {
+  id: string; category: string; category_order: number;
+  name: string; price: number | null; sort_order: number;
+}
+interface GalleryRow { id: string; storage_path: string; alt: string; sort_order: number; }
+
+let prices: PriceRow[] = [];
+let gallery: { id: string; url: string; alt: string; storage_path: string }[] = [];
+
+if (hasServiceRole()) {
+  const db = getServiceClient();
+  const { data: p } = await db
+    .from('prices')
+    .select('id, category, category_order, name, price, sort_order')
+    .order('category_order', { ascending: true })
+    .order('sort_order', { ascending: true });
+  prices = (p as PriceRow[]) ?? [];
+
+  const { data: g } = await db
+    .from('gallery')
+    .select('id, storage_path, alt, sort_order')
+    .order('sort_order', { ascending: true });
+  gallery = ((g as GalleryRow[]) ?? []).map((row) => ({
+    id: row.id,
+    storage_path: row.storage_path,
+    alt: row.alt,
+    url: db.storage.from('gallery').getPublicUrl(row.storage_path).data.publicUrl,
+  }));
+}
+
+const inputCls = 'w-full bg-cream/60 border border-taupe-deep/30 px-3 py-2 text-sm focus:border-gold focus:outline-none';
+const doneMsg: Record<string, string> = {
+  content: 'Tekstit tallennettu.',
+  prices: 'Hinnasto tallennettu.',
+  gallery: 'Galleria päivitetty.',
+};
+---
+
+<AdminLayout title="Sisältö" email={admin.email} active="content">
+  <h1 class="font-serif text-3xl mb-1">Sisältö</h1>
+  <p class="text-ink-soft/70 text-sm mb-8">Muokkaa sivuston tekstejä, hinnastoa ja galleriaa.</p>
+
+  {done && doneMsg[done] && (
+    <div class="mb-6 bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" role="status">{doneMsg[done]}</div>
+  )}
+  {error && (
+    <div class="mb-6 bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+      Tallennus epäonnistui{error === 'size' ? ' (tiedosto liian suuri).' : error === 'type' ? ' (väärä tiedostotyyppi).' : '.'}
+    </div>
+  )}
+  {!hasServiceRole() && (
+    <div class="mb-6 bg-soft border border-gold/40 p-4 text-sm text-ink-soft">
+      Supabasen palveluavainta ei ole määritetty. Muokkaus ei ole käytettävissä — katso README.
+    </div>
+  )}
+
+  <!-- Section nav -->
+  <div class="flex gap-2 mb-10 flex-wrap">
+    <a href="#tekstit" class="px-4 py-2 text-xs uppercase tracking-wider border border-taupe-deep/30 hover:border-ink">Tekstit</a>
+    <a href="#hinnasto" class="px-4 py-2 text-xs uppercase tracking-wider border border-taupe-deep/30 hover:border-ink">Hinnasto</a>
+    <a href="#galleria" class="px-4 py-2 text-xs uppercase tracking-wider border border-taupe-deep/30 hover:border-ink">Galleria</a>
+  </div>
+
+  <!-- ═══════════ TEKSTIT ═══════════ -->
+  <section id="tekstit" class="scroll-mt-28 mb-16">
+    <h2 class="font-serif text-2xl mb-6 pb-2 border-b border-taupe-deep/20">Sivujen tekstit</h2>
+    <form method="POST" action="/api/admin/content-update" class="space-y-10">
+      {textFields.map((grp) => (
+        <fieldset>
+          <legend class="eyebrow !text-gold mb-4">{grp.group}</legend>
+          <div class="grid gap-5 md:grid-cols-2">
+            {grp.fields.map((f) => (
+              <div class:list={[f.type === 'textarea' ? 'md:col-span-2' : '']}>
+                <label class="eyebrow !text-[0.58rem] block mb-1" for={`c-${f.key}`}>{f.label}</label>
+                {f.type === 'textarea' ? (
+                  <textarea id={`c-${f.key}`} name={`content[${f.key}]`} rows="3" class:list={[inputCls, 'resize-y']}>{content[f.key]}</textarea>
+                ) : (
+                  <input id={`c-${f.key}`} type="text" name={`content[${f.key}]`} value={content[f.key]} class={inputCls} />
+                )}
+              </div>
+            ))}
+          </div>
+        </fieldset>
+      ))}
+      <button class="btn btn-solid" type="submit">Tallenna tekstit</button>
+    </form>
+  </section>
+
+  <!-- ═══════════ HINNASTO ═══════════ -->
+  <section id="hinnasto" class="scroll-mt-28 mb-16">
+    <h2 class="font-serif text-2xl mb-6 pb-2 border-b border-taupe-deep/20">Hinnasto</h2>
+
+    <form method="POST" action="/api/admin/price-update" class="overflow-x-auto">
+      <input type="hidden" name="action" value="save" />
+      <table class="w-full text-sm min-w-[640px]">
+        <thead>
+          <tr class="text-left eyebrow !text-[0.56rem] text-ink-soft/70">
+            <th class="pb-2 pr-2 w-8">Ryhmä #</th>
+            <th class="pb-2 pr-2">Kategoria</th>
+            <th class="pb-2 pr-2">Palvelu</th>
+            <th class="pb-2 pr-2 w-24">Hinta (€)</th>
+            <th class="pb-2 pr-2 w-12">Järj.</th>
+            <th class="pb-2 w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {prices.map((p) => (
+            <tr class="border-t border-taupe-deep/15">
+              <td class="py-1.5 pr-2"><input type="number" name={`rows[${p.id}][category_order]`} value={p.category_order} class:list={[inputCls, '!px-1 text-center']} /></td>
+              <td class="py-1.5 pr-2"><input type="text" name={`rows[${p.id}][category]`} value={p.category} class={inputCls} /></td>
+              <td class="py-1.5 pr-2"><input type="text" name={`rows[${p.id}][name]`} value={p.name} class={inputCls} /></td>
+              <td class="py-1.5 pr-2"><input type="text" inputmode="decimal" name={`rows[${p.id}][price]`} value={p.price ?? ''} class:list={[inputCls, 'text-right']} /></td>
+              <td class="py-1.5 pr-2"><input type="number" name={`rows[${p.id}][sort_order]`} value={p.sort_order} class:list={[inputCls, '!px-1 text-center']} /></td>
+              <td class="py-1.5"></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button class="btn btn-solid mt-5" type="submit">Tallenna hinnasto</button>
+    </form>
+
+    <!-- delete + add rows -->
+    <div class="mt-8 grid gap-8 lg:grid-cols-2">
+      <div>
+        <h3 class="eyebrow !text-[0.6rem] mb-3">Poista rivi</h3>
+        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+          {prices.map((p) => (
+            <form method="POST" action="/api/admin/price-update" class="flex items-center gap-2 text-sm">
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="id" value={p.id} />
+              <span class="flex-1 truncate text-ink-soft">{p.category} — {p.name}</span>
+              <button class="text-red-700 text-xs hover:underline" onclick="return confirm('Poista rivi?');">Poista</button>
+            </form>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 class="eyebrow !text-[0.6rem] mb-3">Lisää rivi</h3>
+        <form method="POST" action="/api/admin/price-update" class="space-y-2">
+          <input type="hidden" name="action" value="add" />
+          <input type="text" name="category" placeholder="Kategoria (esim. PARTURI)" class={inputCls} required />
+          <input type="text" name="name" placeholder="Palvelun nimi" class={inputCls} required />
+          <div class="grid grid-cols-3 gap-2">
+            <input type="text" inputmode="decimal" name="price" placeholder="Hinta" class={inputCls} />
+            <input type="number" name="category_order" placeholder="Ryhmä #" class={inputCls} />
+            <input type="number" name="sort_order" placeholder="Järj." class={inputCls} />
+          </div>
+          <button class="btn btn-outline !py-2.5" type="submit">Lisää rivi</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ GALLERIA ═══════════ -->
+  <section id="galleria" class="scroll-mt-28">
+    <h2 class="font-serif text-2xl mb-6 pb-2 border-b border-taupe-deep/20">Galleria</h2>
+
+    <form method="POST" action="/api/admin/gallery" enctype="multipart/form-data" class="bg-soft border border-taupe-deep/20 p-5 mb-8 flex flex-wrap items-end gap-4">
+      <input type="hidden" name="action" value="upload" />
+      <div>
+        <label class="eyebrow !text-[0.58rem] block mb-1" for="gfile">Kuva (JPG / PNG / WebP / AVIF, max 6 MB)</label>
+        <input id="gfile" type="file" name="file" accept="image/*" required class="text-sm" />
+      </div>
+      <div class="flex-1 min-w-[200px]">
+        <label class="eyebrow !text-[0.58rem] block mb-1" for="galt">Alt-teksti (saavutettavuus)</label>
+        <input id="galt" type="text" name="alt" class={inputCls} placeholder="Kuvaus kuvasta" />
+      </div>
+      <button class="btn btn-solid" type="submit">Lataa kuva</button>
+    </form>
+
+    {gallery.length === 0 ? (
+      <p class="text-ink-soft/60 text-sm">Ei kuvia vielä. Julkiset sivut näyttävät paikkamerkit kunnes lisäät kuvia.</p>
+    ) : (
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {gallery.map((img) => (
+          <div class="bg-soft border border-taupe-deep/20 p-2">
+            <img src={img.url} alt={img.alt} class="w-full aspect-square object-cover" loading="lazy" />
+            <form method="POST" action="/api/admin/gallery" class="mt-2 flex gap-1">
+              <input type="hidden" name="action" value="alt" />
+              <input type="hidden" name="id" value={img.id} />
+              <input type="text" name="alt" value={img.alt} placeholder="Alt-teksti" class:list={[inputCls, '!text-xs !py-1']} />
+              <button class="text-xs text-ink-soft hover:text-ink shrink-0 px-1" title="Tallenna alt-teksti">✓</button>
+            </form>
+            <form method="POST" action="/api/admin/gallery" class="mt-1">
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="id" value={img.id} />
+              <input type="hidden" name="storage_path" value={img.storage_path} />
+              <button class="text-xs text-red-700 hover:underline w-full text-left" onclick="return confirm('Poista kuva?');">Poista kuva</button>
+            </form>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</AdminLayout>

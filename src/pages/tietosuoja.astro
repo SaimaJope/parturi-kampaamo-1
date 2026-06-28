@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getContent, c } from '../lib/content';
+
+const content = await getContent();
+// NOTE: This is a TEMPLATE. The data controller must complete the // TODO
+// items below (controller name, contact, legal basis) before going live.
+---
+
+<BaseLayout
+  title="Tietosuojaseloste — Salon Janika"
+  description="Salon Janikan tietosuojaseloste: miten käsittelemme ajanvarauksessa antamiasi henkilötietoja."
+  path="/tietosuoja"
+  schema={false}
+>
+  <section class="pt-36 md:pt-44 pb-24">
+    <div class="container-prose max-w-3xl">
+      <p class="eyebrow mb-4">Tietosuoja</p>
+      <h1 class="font-serif leading-tight" style="font-size:var(--text-display)">Tietosuojaseloste</h1>
+      <div class="rule max-w-[6rem] my-10"></div>
+
+      <div class="prose-salon space-y-8 text-ink-soft leading-relaxed">
+        <div class="bg-soft border border-gold/30 p-5 text-sm">
+          <strong class="text-ink">Huom.</strong> Tämä on mallipohja. Rekisterinpitäjän on
+          täydennettävä alla merkityt kohdat (nimi, yhteystiedot, käsittelyn oikeusperuste)
+          ennen julkaisua.
+        </div>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">1. Rekisterinpitäjä</h2>
+          <p>
+            {/* TODO: Lisää rekisterinpitäjän virallinen nimi ja Y-tunnus */}
+            Salon Janika — {c(content, 'address_street')}, {c(content, 'address_postal')}.<br />
+            Puhelin: {c(content, 'phone_display')}.<br />
+            {/* TODO: Lisää rekisterinpitäjän sähköpostiosoite ja yhteyshenkilö */}
+            Sähköposti: <em>[TODO: yhteyssähköposti]</em>
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">2. Käsiteltävät henkilötiedot</h2>
+          <p>Käsittelemme ajanvarauksen yhteydessä antamiasi tietoja:</p>
+          <ul class="list-disc pl-6 mt-2 space-y-1">
+            <li>Nimi</li>
+            <li>Puhelinnumero</li>
+            <li>Sähköpostiosoite (jos annat sen)</li>
+            <li>Toivottu palvelu, päivä ja kellonaika</li>
+            <li>Mahdollinen vapaamuotoinen viesti</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">3. Käsittelyn tarkoitus ja oikeusperuste</h2>
+          <p>
+            Henkilötietoja käsitellään ajanvarausten vastaanottamiseen, vahvistamiseen ja
+            asiakaspalveluun.
+            {/* TODO: Vahvista oikeusperuste — yleensä suostumus ja/tai sopimuksen valmistelu (GDPR 6(1)(a)/(b)) */}
+            Oikeusperusteena on suostumuksesi sekä toimenpiteet sopimuksen tekemiseksi
+            (palvelun varaaminen).
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">4. Tietojen säilytys</h2>
+          <p>
+            Säilytämme varauspyyntöihin liittyviä tietoja vain niin kauan kuin on
+            tarpeellista. Hylätyt ja vanhat varaukset poistetaan säännöllisesti
+            (oletuksena 6 kuukauden kuluttua).
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">5. Tietojen vastaanottajat</h2>
+          <p>
+            Käytämme tietojen tallennukseen Supabase-palvelua ja sähköpostien lähetykseen
+            Resend-palvelua. Tietoja ei luovuteta markkinointitarkoituksiin.
+            {/* TODO: Mainitse mahdollinen tietojen siirto EU/ETA-alueen ulkopuolelle ja suojatoimet */}
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-serif text-2xl text-ink mb-3">6. Rekisteröidyn oikeudet</h2>
+          <p>
+            Sinulla on oikeus tarkastaa, oikaista ja poistaa tietosi sekä peruuttaa
+            suostumuksesi. Ota yhteyttä yllä oleviin yhteystietoihin.
+          </p>
+        </section>
+      </div>
+
+      <a href="/ajanvaraus" class="btn btn-outline mt-12">Takaisin ajanvaraukseen</a>
+    </div>
+  </section>
+</BaseLayout>

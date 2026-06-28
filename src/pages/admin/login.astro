@@ -1,0 +1,64 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../lib/auth';
+import { isSupabaseConfigured } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Already logged in? Go straight to the dashboard.
+const admin = await requireAdmin(Astro.cookies);
+if (admin) return Astro.redirect('/admin');
+
+const error = Astro.url.searchParams.get('error');
+const configured = isSupabaseConfigured();
+const errorMsg =
+  error === 'rate'
+    ? 'Liian monta yritystä. Yritä hetken kuluttua uudelleen.'
+    : error
+      ? 'Virheellinen sähköposti tai salasana.'
+      : null;
+---
+
+<AdminLayout title="Kirjaudu">
+  <div class="min-h-[70vh] flex items-center justify-center">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-10">
+        <div class="font-serif text-3xl">Salon <span class="script text-4xl">Janika</span></div>
+        <p class="eyebrow mt-2 !text-[0.62rem]">Hallintapaneeli</p>
+      </div>
+
+      {!configured && (
+        <div class="mb-6 bg-soft border border-gold/40 p-4 text-sm text-ink-soft">
+          Supabasea ei ole määritetty. Lisää ympäristömuuttujat ja luo admin-käyttäjä
+          (katso README) jatkaaksesi.
+        </div>
+      )}
+
+      {errorMsg && (
+        <div class="mb-6 bg-red-50 border border-red-200 p-3 text-sm text-red-700" role="alert">
+          {errorMsg}
+        </div>
+      )}
+
+      <form method="POST" action="/api/auth/login" class="space-y-6 bg-soft border border-taupe-deep/20 p-8">
+        <div>
+          <label class="eyebrow !text-[0.62rem] block mb-1" for="email">Sähköposti</label>
+          <input
+            class="w-full bg-transparent border-b border-taupe-deep/40 py-2.5 text-ink focus:border-gold focus:outline-none"
+            type="email" id="email" name="email" required autocomplete="username"
+          />
+        </div>
+        <div>
+          <label class="eyebrow !text-[0.62rem] block mb-1" for="password">Salasana</label>
+          <input
+            class="w-full bg-transparent border-b border-taupe-deep/40 py-2.5 text-ink focus:border-gold focus:outline-none"
+            type="password" id="password" name="password" required autocomplete="current-password"
+          />
+        </div>
+        <button type="submit" class="btn btn-solid w-full">Kirjaudu sisään</button>
+      </form>
+
+      <a href="/" class="block text-center eyebrow !text-[0.6rem] mt-6 text-ink-soft/60 hover:text-ink">← Takaisin sivustolle</a>
+    </div>
+  </div>
+</AdminLayout>

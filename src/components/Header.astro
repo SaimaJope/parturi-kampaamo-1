@@ -1,0 +1,217 @@
+---
+/**
+ * Site header. Two modes:
+ *  - transparentTop=true (homepage): transparent over the dark hero with a
+ *    WHITE logo + white nav; turns into a solid cream header with the gold
+ *    logo + dark nav once the user scrolls.
+ *  - transparentTop=false (all other pages): solid cream header from the start
+ *    (their content sits on a light background, so white-on-transparent would
+ *    be invisible).
+ * Mobile uses a hamburger drawer plus a persistent tap-to-call affordance.
+ */
+export interface Props {
+  phone: string;
+  phoneDisplay: string;
+  transparentTop?: boolean;
+}
+const { phone, phoneDisplay, transparentTop = false } = Astro.props;
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: '/', label: 'Etusivu' },
+  { href: '/hinnasto', label: 'Hinnasto' },
+  { href: '/yhteystiedot', label: 'Yhteystiedot' },
+  { href: '/ajanvaraus', label: 'Ajanvaraus' },
+];
+const isActive = (href: string) =>
+  href === '/' ? path === '/' : path.startsWith(href);
+const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
+---
+
+<header
+  id="site-header"
+  class:list={['site-header fixed top-0 inset-x-0 z-50 transition-all duration-500', transparentTop ? 'header-transparent' : '']}
+  data-header
+>
+  <div class="container-wide flex items-center justify-between py-3 md:py-4">
+    <!-- Logo -->
+    <a href="/" class="block shrink-0" aria-label="Salon Janika — etusivu">
+      <img
+        src="/logo.png"
+        alt="Salon Janika — parturi-kampaamo"
+        class="logo-img h-11 md:h-14 w-auto"
+        width="1884"
+        height="835"
+        fetchpriority="high"
+      />
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden lg:flex items-center gap-10" aria-label="Päävalikko">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={['nav-link eyebrow !text-[0.7rem] relative', isActive(item.href) ? 'active' : '']}
+          aria-current={isActive(item.href) ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
+      <a href={telHref} class="nav-phone eyebrow !text-[0.7rem]">{phoneDisplay}</a>
+    </nav>
+
+    <!-- Mobile hamburger -->
+    <button
+      type="button"
+      id="nav-toggle"
+      class="lg:hidden p-2 -mr-2"
+      aria-label="Avaa valikko"
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+    >
+      <span class="block w-6 h-px mb-1.5 transition-all" data-bar></span>
+      <span class="block w-6 h-px mb-1.5 transition-all" data-bar></span>
+      <span class="block w-4 h-px transition-all" data-bar></span>
+    </button>
+  </div>
+
+  <!-- Mobile drawer -->
+  <div
+    id="mobile-nav"
+    class="lg:hidden fixed inset-0 z-40 bg-cream/98 backdrop-blur-sm flex flex-col items-center justify-center gap-8 opacity-0 pointer-events-none transition-opacity duration-500"
+    aria-hidden="true"
+  >
+    <nav class="flex flex-col items-center gap-7" aria-label="Mobiilivalikko">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            'font-serif text-3xl tracking-tight transition-colors',
+            isActive(item.href) ? 'text-gold' : 'text-ink',
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <div class="rule max-w-[12rem]"></div>
+    <a href={telHref} class="eyebrow !text-[0.8rem] !text-gold">{phoneDisplay}</a>
+  </div>
+</header>
+
+<!-- Persistent mobile tap-to-call affordance -->
+<a
+  href={telHref}
+  class="lg:hidden fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-ink text-soft flex items-center justify-center shadow-lg shadow-ink/20"
+  aria-label={`Soita ${phoneDisplay}`}
+>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+</a>
+
+<style>
+  /* Solid default state (all pages, and homepage after scroll) */
+  .site-header {
+    background: var(--color-soft);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-taupe-deep) 20%, transparent);
+  }
+  .site-header.scrolled {
+    box-shadow: 0 8px 30px -12px color-mix(in srgb, var(--color-ink) 22%, transparent);
+  }
+
+  /* Nav + logo colours in the solid state */
+  .nav-link {
+    color: var(--color-ink-soft);
+    transition: color 0.3s var(--ease-soft);
+  }
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--color-ink);
+  }
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -0.5rem;
+    height: 1px;
+    width: 100%;
+    background: var(--color-gold);
+  }
+  .nav-phone {
+    color: var(--color-gold);
+    transition: color 0.3s var(--ease-soft);
+  }
+  .nav-phone:hover {
+    color: var(--color-ink);
+  }
+  [data-bar] {
+    background: var(--color-ink);
+  }
+
+  /* Transparent state — homepage, before scroll: white over the dark hero */
+  .header-transparent:not(.scrolled) {
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+  }
+  .header-transparent:not(.scrolled) .nav-link,
+  .header-transparent:not(.scrolled) .nav-phone {
+    color: rgba(255, 255, 255, 0.88);
+  }
+  .header-transparent:not(.scrolled) .nav-link:hover,
+  .header-transparent:not(.scrolled) .nav-phone:hover {
+    color: #fff;
+  }
+  .header-transparent:not(.scrolled) .nav-link.active::after {
+    background: #fff;
+  }
+  /* Turn the gold/ink logo pure white while transparent */
+  .header-transparent:not(.scrolled) .logo-img {
+    filter: brightness(0) invert(1);
+  }
+  .logo-img {
+    transition: filter 0.4s var(--ease-soft);
+  }
+  .header-transparent:not(.scrolled) [data-bar] {
+    background: #fff;
+  }
+
+  /* Hamburger animation — bars are always dark while the (cream) drawer is open */
+  #nav-toggle.open [data-bar] { background: var(--color-ink); }
+  #nav-toggle.open [data-bar]:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  #nav-toggle.open [data-bar]:nth-child(2) { opacity: 0; }
+  #nav-toggle.open [data-bar]:nth-child(3) { width: 1.5rem; transform: translateY(-7px) rotate(-45deg); }
+  #mobile-nav.open { opacity: 1; pointer-events: auto; }
+</style>
+
+<script>
+  const header = document.querySelector('[data-header]');
+  const onScroll = () => {
+    if (window.scrollY > 24) header?.classList.add('scrolled');
+    else header?.classList.remove('scrolled');
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  const toggle = document.getElementById('nav-toggle');
+  const drawer = document.getElementById('mobile-nav');
+  const close = () => {
+    toggle?.classList.remove('open');
+    drawer?.classList.remove('open');
+    toggle?.setAttribute('aria-expanded', 'false');
+    drawer?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  };
+  toggle?.addEventListener('click', () => {
+    const open = toggle.classList.toggle('open');
+    drawer?.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    drawer?.setAttribute('aria-hidden', String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
+  drawer?.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+</script>

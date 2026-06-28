@@ -1,0 +1,179 @@
+---
+/**
+ * Booking-request form. Posts to /api/booking.
+ * - Works without JS (native POST → redirect with ?ok=1).
+ * - With JS: async submit, inline field errors, Finnish success state.
+ * - Includes a hidden honeypot field ("website") for spam.
+ */
+import type { PriceRow } from '../lib/defaults';
+
+export interface Props {
+  groups: { category: string; items: PriceRow[] }[];
+  /** Show success state immediately (e.g. after a no-JS redirect). */
+  submitted?: boolean;
+}
+const { groups, submitted = false } = Astro.props;
+const fieldCls =
+  'w-full bg-transparent border-b border-taupe-deep/40 py-3 text-ink font-sans text-base placeholder:text-ink-soft/40 focus:border-gold focus:outline-none transition-colors';
+const labelCls = 'eyebrow !text-[0.64rem] block mb-1';
+---
+
+<div data-booking>
+  <!-- Success state -->
+  <div
+    data-success
+    class:list={['text-center py-16', submitted ? '' : 'hidden']}
+    role="status"
+    aria-live="polite"
+  >
+    <div class="script text-6xl mb-4">Kiitos</div>
+    <p class="font-serif text-2xl text-ink max-w-md mx-auto">
+      Varauspyyntösi on vastaanotettu. Vahvistan ajan pian.
+    </p>
+    <a href="/" class="btn btn-outline mt-10">Takaisin etusivulle</a>
+  </div>
+
+  <!-- Form -->
+  <form
+    data-form
+    method="POST"
+    action="/api/booking"
+    novalidate
+    class:list={['space-y-8', submitted ? 'hidden' : '']}
+  >
+    <!-- Honeypot: hidden from users, bots fill it in -->
+    <div aria-hidden="true" class="absolute left-[-9999px] w-px h-px overflow-hidden">
+      <label>Älä täytä tätä kenttää <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+    </div>
+
+    <div class="grid gap-7 md:grid-cols-2">
+      <div>
+        <label class={labelCls} for="customer_name">Nimi *</label>
+        <input class={fieldCls} type="text" id="customer_name" name="customer_name" required autocomplete="name" />
+        <p class="err text-sm text-red-700 mt-1 hidden" data-err="customer_name"></p>
+      </div>
+      <div>
+        <label class={labelCls} for="customer_phone">Puhelinnumero *</label>
+        <input class={fieldCls} type="tel" id="customer_phone" name="customer_phone" required autocomplete="tel" />
+        <p class="err text-sm text-red-700 mt-1 hidden" data-err="customer_phone"></p>
+      </div>
+    </div>
+
+    <div>
+      <label class={labelCls} for="customer_email">Sähköposti (vapaaehtoinen)</label>
+      <input class={fieldCls} type="email" id="customer_email" name="customer_email" autocomplete="email" />
+      <p class="err text-sm text-red-700 mt-1 hidden" data-err="customer_email"></p>
+      <p class="text-xs text-ink-soft/60 mt-1.5">Saat vahvistuksen sähköpostiisi, jos annat osoitteen.</p>
+    </div>
+
+    <div>
+      <label class={labelCls} for="service">Palvelu *</label>
+      <select class={fieldCls} id="service" name="service" required>
+        <option value="" disabled selected>Valitse palvelu…</option>
+        {groups.map((g) => (
+          <optgroup label={g.category}>
+            {g.items.map((item) => (
+              <option value={`${g.category} — ${item.name}`}>
+                {item.name}{item.price !== null ? ` — ${Number.isInteger(Number(item.price)) ? item.price : Number(item.price).toFixed(2).replace('.', ',')} €` : ''}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      <p class="err text-sm text-red-700 mt-1 hidden" data-err="service"></p>
+    </div>
+
+    <div class="grid gap-7 md:grid-cols-2">
+      <div>
+        <label class={labelCls} for="preferred_date">Toivottu päivä</label>
+        <input class={fieldCls} type="date" id="preferred_date" name="preferred_date" />
+        <p class="err text-sm text-red-700 mt-1 hidden" data-err="preferred_date"></p>
+      </div>
+      <div>
+        <label class={labelCls} for="preferred_time">Toivottu kellonaika / aikaikkuna</label>
+        <input class={fieldCls} type="text" id="preferred_time" name="preferred_time" placeholder="esim. klo 14 tai iltapäivä" />
+      </div>
+    </div>
+
+    <div>
+      <label class={labelCls} for="message">Viesti (vapaaehtoinen)</label>
+      <textarea class:list={[fieldCls, 'resize-none']} id="message" name="message" rows="3"></textarea>
+    </div>
+
+    <label class="flex items-start gap-3 cursor-pointer">
+      <input type="checkbox" name="consent_given" required class="mt-1 w-4 h-4 accent-[var(--color-ink)] shrink-0" />
+      <span class="text-sm text-ink-soft leading-relaxed">
+        Hyväksyn henkilötietojeni käsittelyn ajanvarausta varten.
+        <a href="/tietosuoja" class="underline decoration-gold underline-offset-2 hover:text-ink">Lue tietosuojaseloste</a>.
+      </span>
+    </label>
+    <p class="err text-sm text-red-700 -mt-4 hidden" data-err="consent_given"></p>
+
+    <p class="err text-sm text-red-700 hidden" data-err="_form"></p>
+
+    <div class="pt-2">
+      <button type="submit" class="btn btn-solid w-full md:w-auto" data-submit>
+        Lähetä varauspyyntö
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const root = document.querySelector('[data-booking]');
+  if (root) {
+    const form = root.querySelector('[data-form]') as HTMLFormElement | null;
+    const success = root.querySelector('[data-success]') as HTMLElement | null;
+    const submitBtn = root.querySelector('[data-submit]') as HTMLButtonElement | null;
+
+    const clearErrors = () =>
+      root.querySelectorAll('.err').forEach((el) => {
+        el.textContent = '';
+        el.classList.add('hidden');
+      });
+    const showError = (key: string, msg: string) => {
+      const el = root.querySelector(`[data-err="${key}"]`);
+      if (el) {
+        el.textContent = msg;
+        el.classList.remove('hidden');
+      }
+    };
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+      if (!submitBtn) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Lähetetään…';
+
+      try {
+        const res = await fetch('/api/booking', {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new FormData(form),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.ok) {
+          form.classList.add('hidden');
+          success?.classList.remove('hidden');
+          success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        if (res.status === 429) {
+          showError('_form', 'Liian monta yritystä. Yritä hetken kuluttua uudelleen tai soita meille.');
+        } else if (data.errors) {
+          for (const [k, v] of Object.entries(data.errors)) showError(k, String(v));
+          showError('_form', 'Tarkista lomakkeen kentät.');
+        } else {
+          showError('_form', 'Lähetys epäonnistui. Yritä uudelleen tai soita meille.');
+        }
+      } catch {
+        showError('_form', 'Verkkovirhe. Yritä uudelleen tai soita meille.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lähetä varauspyyntö';
+      }
+    });
+  }
+</script>

@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Reveal from '../components/Reveal.astro';
+import BookingForm from '../components/BookingForm.astro';
+import { getContent, c, getPrices, groupPrices } from '../lib/content';
+
+const content = await getContent();
+const prices = await getPrices();
+const groups = groupPrices(prices);
+
+// No-JS success: /api/booking redirects here with ?ok=1
+const submitted = Astro.url.searchParams.get('ok') === '1';
+const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/, '');
+---
+
+<BaseLayout
+  title="Ajanvaraus — Salon Janika, Matinkylä Espoo"
+  description="Varaa aika Salon Janikaan helposti verkossa. Jätä varauspyyntö lomakkeella tai soita 09 855 2757. Avoinna MA–PE 10–18."
+  path="/ajanvaraus"
+>
+  <!-- Header -->
+  <section class="pt-36 md:pt-44 pb-10 text-center">
+    <div class="container-prose">
+      <p class="eyebrow mb-4 reveal is-visible">Varaa aika</p>
+      <h1 class="leading-[0.85]">
+        <span class="script block text-gold" style="font-size:clamp(3rem,11vw,7.5rem)">Ajanvaraus</span>
+      </h1>
+      <p class="mt-8 text-lg text-ink-soft max-w-xl mx-auto">
+        {c(content, 'ajanvaraus_intro')}
+      </p>
+
+      <!-- Hours + phone alternative -->
+      <div class="mt-8 flex flex-col sm:flex-row gap-x-8 gap-y-2 justify-center items-center text-ink-soft">
+        <span>{c(content, 'open_weekday')}</span>
+        <span class="hidden sm:inline text-taupe-deep">·</span>
+        <span>{c(content, 'open_saturday')}</span>
+      </div>
+      <p class="mt-3 text-ink-soft">
+        tai soita
+        <a href={telHref} class="font-serif text-xl text-ink hover:text-gold transition-colors underline decoration-gold underline-offset-4 ml-1">
+          {c(content, 'phone')}
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="pb-28">
+    <div class="container-prose max-w-2xl">
+      <Reveal class="bg-soft border border-taupe-deep/20 p-7 md:p-12 shadow-sm shadow-ink/5">
+        <BookingForm groups={groups} submitted={submitted} />
+      </Reveal>
+      <p class="text-center text-xs text-ink-soft/60 mt-6 max-w-md mx-auto">
+        Varauspyyntö ei ole vielä vahvistettu aika. Saat vahvistuksen henkilökohtaisesti.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

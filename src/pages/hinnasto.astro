@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Reveal from '../components/Reveal.astro';
+import PriceList from '../components/PriceList.astro';
+import { getContent, c, getPrices, groupPrices } from '../lib/content';
+
+const content = await getContent();
+const prices = await getPrices();
+const groups = groupPrices(prices);
+---
+
+<BaseLayout
+  title="Hinnasto — Salon Janika, parturi-kampaamo Matinkylä Espoo"
+  description="Salon Janikan hinnasto: parturi, kampaamo, värikäsittelyt, monivärit, permanentit ja Olaplex-hoidot. Hinnat sisältävät ALV:n."
+  path="/hinnasto"
+>
+  <!-- Page header -->
+  <section class="pt-36 md:pt-44 pb-12 text-center">
+    <div class="container-prose">
+      <p class="eyebrow mb-4 reveal is-visible">Palvelut & hinnat</p>
+      <h1 class="leading-[0.85]">
+        <span class="script block text-gold" style="font-size:clamp(3.5rem,12vw,8rem)">Hinnasto</span>
+      </h1>
+      <p class="mt-8 text-lg text-ink-soft max-w-xl mx-auto">
+        {c(content, 'hinnasto_lead')}
+      </p>
+      <div class="rule max-w-[6rem] mx-auto mt-10"></div>
+    </div>
+  </section>
+
+  <!-- Price list -->
+  <section class="pb-20">
+    <div class="container-wide max-w-5xl">
+      <PriceList groups={groups} permNote={c(content, 'hinnasto_perm_note')} />
+
+      <!-- Footnotes -->
+      <Reveal class="mt-16 pt-8 border-t border-taupe-deep/25 space-y-2 text-center">
+        <p class="text-sm text-ink-soft/80">{c(content, 'hinnasto_footnote_1')}</p>
+        <p class="text-sm text-ink-soft/80">{c(content, 'hinnasto_footnote_2')}</p>
+      </Reveal>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="pb-28">
+    <div class="container-prose text-center">
+      <div class="bg-ink text-cream py-16 px-6 rounded-sm">
+        <p class="script text-gold-soft text-5xl">Varaa aika</p>
+        <p class="mt-3 font-serif text-2xl text-cream/90">Löydetään sinulle sopiva hetki.</p>
+        <a href="/ajanvaraus" class="btn btn-light mt-8">Varaa aika</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

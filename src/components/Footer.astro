@@ -1,0 +1,59 @@
+---
+/**
+ * Footer present on every public page.
+ * Required line: "ark. 10–18, la sopimuksen mukaan · 09 855 2757 · Mirjankuja 2, Matinkylä"
+ */
+export interface Props {
+  hours: string;
+  phoneDisplay: string;
+  phone: string;
+  addressStreet: string;
+  addressArea: string;
+}
+const { hours, phoneDisplay, phone, addressStreet, addressArea } = Astro.props;
+const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
+const year = 2025; // static; bump as needed
+---
+
+<footer class="bg-ink text-cream/80">
+  <div class="container-wide py-16 md:py-20">
+    <div class="grid gap-10 md:grid-cols-3 md:gap-8 items-start">
+      <!-- Brand -->
+      <div>
+        <div class="eyebrow !text-cream/50 !text-[0.6rem]">Parturi-Kampaamo</div>
+        <div class="font-serif text-3xl mt-1 text-cream">
+          Salon <span class="script !text-gold-soft text-4xl">Janika</span>
+        </div>
+        <p class="mt-4 text-sm text-cream/60 max-w-xs">
+          Koko perheen parturi-kampaamo Espoon Matinkylässä.
+        </p>
+      </div>
+
+      <!-- Contact -->
+      <div class="md:text-center">
+        <div class="eyebrow !text-cream/50 mb-4">Yhteystiedot</div>
+        <address class="not-italic text-sm leading-relaxed text-cream/80">
+          {addressStreet}, {addressArea}<br />
+          <a href={telHref} class="hover:text-gold-soft transition-colors">{phoneDisplay}</a>
+        </address>
+      </div>
+
+      <!-- Hours + CTA -->
+      <div class="md:text-right">
+        <div class="eyebrow !text-cream/50 mb-4">Aukioloajat</div>
+        <p class="text-sm text-cream/80">{hours}</p>
+        <a href="/ajanvaraus" class="btn btn-light mt-6">Varaa aika</a>
+      </div>
+    </div>
+
+    <div class="mt-14 pt-8 border-t border-cream/10 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+      <p class="text-xs text-cream/45 tracking-wide">
+        {hours} · {phoneDisplay} · {addressStreet}, {addressArea}
+      </p>
+      <div class="flex gap-5 text-xs text-cream/45">
+        <a href="/tietosuoja" class="hover:text-cream/80 transition-colors">Tietosuojaseloste</a>
+        <span>© {year} Salon Janika</span>
+      </div>
+    </div>
+  </div>
+</footer>

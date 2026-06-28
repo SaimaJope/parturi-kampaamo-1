@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Reveal from '../components/Reveal.astro';
+import { getContent, c } from '../lib/content';
+
+const content = await getContent();
+const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/, '');
+const mapsQuery = encodeURIComponent('Mirjankuja 2, 02230 Espoo, Matinkylä');
+const mapEmbed = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
+const mapsLink = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+---
+
+<BaseLayout
+  title="Yhteystiedot — Salon Janika, Matinkylä Espoo"
+  description="Salon Janika sijaitsee osoitteessa Mirjankuja 2, 02230 Espoo, Matinkylä. Avoinna MA–PE 10–18, lauantaisin sopimuksen mukaan. Puh. 09-855 2757."
+  path="/yhteystiedot"
+>
+  <!-- Header -->
+  <section class="pt-36 md:pt-44 pb-12 text-center">
+    <div class="container-prose">
+      <p class="eyebrow mb-4 reveal is-visible">Löydä meille</p>
+      <h1 class="leading-[0.85]">
+        <span class="script block text-gold" style="font-size:clamp(3rem,10vw,7rem)">Yhteystiedot</span>
+      </h1>
+      <p class="mt-8 text-lg text-ink-soft max-w-xl mx-auto">
+        {c(content, 'yhteystiedot_location')}
+      </p>
+    </div>
+  </section>
+
+  <section class="pb-24">
+    <div class="container-wide grid gap-12 lg:grid-cols-5 items-stretch">
+      <!-- Info -->
+      <Reveal class="lg:col-span-2 flex flex-col justify-center md:pr-8">
+        <div class="space-y-10">
+          <div>
+            <span class="eyebrow !text-gold">Osoite</span>
+            <address class="not-italic mt-3 text-2xl font-serif text-ink leading-snug">
+              {c(content, 'address_street')}<br />
+              {c(content, 'address_postal')}
+            </address>
+            <a href={mapsLink} target="_blank" rel="noopener" class="inline-block mt-3 eyebrow !text-[0.62rem] underline decoration-gold underline-offset-4">
+              Avaa kartalla ↗
+            </a>
+          </div>
+
+          <div class="rule max-w-[8rem]"></div>
+
+          <div>
+            <span class="eyebrow !text-gold">Puhelin</span>
+            <p class="mt-3 text-2xl font-serif">
+              <a href={telHref} class="hover:text-gold transition-colors">{c(content, 'phone_display')}</a>
+            </p>
+          </div>
+
+          <div class="rule max-w-[8rem]"></div>
+
+          <div>
+            <span class="eyebrow !text-gold">Aukioloajat</span>
+            <p class="mt-3 text-xl font-serif text-ink">{c(content, 'open_weekday')}</p>
+            <p class="text-xl font-serif text-ink-soft">{c(content, 'open_saturday')}</p>
+          </div>
+
+          <a href="/ajanvaraus" class="btn btn-solid self-start">Varaa aika</a>
+        </div>
+      </Reveal>
+
+      <!-- Map -->
+      <Reveal class="lg:col-span-3" delay={120}>
+        <div class="relative w-full h-[420px] lg:h-full min-h-[420px] overflow-hidden bg-soft border border-taupe-deep/20">
+          <iframe
+            title="Salon Janikan sijainti kartalla — Mirjankuja 2, Matinkylä"
+            src={mapEmbed}
+            class="w-full h-full"
+            style="border:0;"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </Reveal>
+    </div>
+  </section>
+</BaseLayout>

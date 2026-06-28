@@ -1,0 +1,192 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../lib/auth';
+import { getServiceClient, hasServiceRole } from '../../lib/supabase';
+
+export const prerender = false;
+
+const admin = await requireAdmin(Astro.cookies);
+if (!admin) return Astro.redirect('/admin/login');
+
+const filter = Astro.url.searchParams.get('status') ?? 'pending';
+const done = Astro.url.searchParams.get('done');
+
+interface Booking {
+  id: string;
+  created_at: string;
+  status: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  service: string;
+  preferred_date: string | null;
+  preferred_time: string | null;
+  message: string | null;
+  admin_note: string | null;
+}
+
+let bookings: Booking[] = [];
+let loadError = false;
+if (hasServiceRole()) {
+  let q = getServiceClient()
+    .from('bookings')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (filter !== 'all') q = q.eq('status', filter);
+  const { data, error } = await q;
+  if (error) loadError = true;
+  else bookings = (data as Booking[]) ?? [];
+}
+
+const counts: Record<string, number> = { pending: 0, confirmed: 0, declined: 0 };
+if (hasServiceRole()) {
+  const { data } = await getServiceClient().from('bookings').select('status');
+  for (const r of data ?? []) counts[r.status] = (counts[r.status] ?? 0) + 1;
+}
+
+const fmtDate = (d: string | null) => {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}.${m}.${y}`;
+};
+const fmtCreated = (iso: string) => {
+  const dt = new Date(iso);
+  return dt.toLocaleString('fi-FI', { dateStyle: 'short', timeStyle: 'short' });
+};
+const statusLabel: Record<string, string> = {
+  pending: 'Odottaa',
+  confirmed: 'Vahvistettu',
+  declined: 'Hylätty',
+};
+const statusCls: Record<string, string> = {
+  pending: 'bg-gold/15 text-gold',
+  confirmed: 'bg-emerald-100 text-emerald-800',
+  declined: 'bg-red-100 text-red-700',
+};
+const doneMsg =
+  done === 'confirmed' ? 'Varaus vahvistettu ja asiakkaalle lähetetty viesti.'
+  : done === 'declined' ? 'Varaus hylätty ja asiakkaalle lähetetty viesti.'
+  : done === 'deleted' ? 'Varaus poistettu.'
+  : null;
+
+const filters = [
+  { key: 'pending', label: `Odottaa (${counts.pending})` },
+  { key: 'confirmed', label: `Vahvistetut (${counts.confirmed})` },
+  { key: 'declined', label: `Hylätyt (${counts.declined})` },
+  { key: 'all', label: 'Kaikki' },
+];
+---
+
+<AdminLayout title="Varauspyynnöt" email={admin.email} active="bookings">
+  <div class="flex items-end justify-between flex-wrap gap-4 mb-8">
+    <div>
+      <h1 class="font-serif text-3xl">Varauspyynnöt</h1>
+      <p class="text-ink-soft/70 text-sm mt-1">Hyväksy tai hylkää saapuneet varauspyynnöt.</p>
+    </div>
+  </div>
+
+  {doneMsg && (
+    <div class="mb-6 bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" role="status">{doneMsg}</div>
+  )}
+  {!hasServiceRole() && (
+    <div class="mb-6 bg-soft border border-gold/40 p-4 text-sm text-ink-soft">
+      Supabasen palveluavainta ei ole määritetty, joten varauksia ei voida näyttää. Katso README.
+    </div>
+  )}
+  {loadError && (
+    <div class="mb-6 bg-red-50 border border-red-200 p-3 text-sm text-red-700">Varauksia ei voitu ladata.</div>
+  )}
+
+  <!-- Status filter -->
+  <div class="flex gap-2 flex-wrap mb-8">
+    {filters.map((f) => (
+      <a
+        href={`/admin?status=${f.key}`}
+        class:list={[
+          'px-4 py-2 text-xs uppercase tracking-wider border transition-colors',
+          filter === f.key ? 'bg-ink text-cream border-ink' : 'border-taupe-deep/30 text-ink-soft hover:border-ink',
+        ]}
+      >{f.label}</a>
+    ))}
+  </div>
+
+  {bookings.length === 0 ? (
+    <p class="text-ink-soft/60 py-16 text-center border border-dashed border-taupe-deep/30">
+      Ei varauspyyntöjä tässä näkymässä.
+    </p>
+  ) : (
+    <div class="space-y-4">
+      {bookings.map((b) => (
+        <details class="group bg-soft border border-taupe-deep/20 open:border-gold/40 transition-colors">
+          <summary class="cursor-pointer list-none p-5 flex items-center gap-4 flex-wrap">
+            <span class:list={['text-[0.62rem] uppercase tracking-wider px-2.5 py-1 rounded-full', statusCls[b.status]]}>
+              {statusLabel[b.status]}
+            </span>
+            <span class="font-serif text-xl text-ink">{b.customer_name}</span>
+            <span class="text-ink-soft text-sm">{b.service}</span>
+            <span class="ml-auto text-sm text-ink-soft/70">
+              {fmtDate(b.preferred_date)}{b.preferred_time ? ` · ${b.preferred_time}` : ''}
+            </span>
+            <span class="text-gold text-xs transition-transform group-open:rotate-180">▾</span>
+          </summary>
+
+          <div class="px-5 pb-5 pt-1 border-t border-taupe-deep/15">
+            <div class="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm py-4">
+              <p><span class="text-ink-soft/60">Puhelin:</span> <a href={`tel:${b.customer_phone}`} class="text-ink hover:text-gold">{b.customer_phone}</a></p>
+              <p><span class="text-ink-soft/60">Sähköposti:</span> {b.customer_email ? <a href={`mailto:${b.customer_email}`} class="text-ink hover:text-gold">{b.customer_email}</a> : '—'}</p>
+              <p><span class="text-ink-soft/60">Toivottu päivä:</span> {fmtDate(b.preferred_date)}</p>
+              <p><span class="text-ink-soft/60">Toivottu aika:</span> {b.preferred_time || '—'}</p>
+              <p class="sm:col-span-2"><span class="text-ink-soft/60">Saapunut:</span> {fmtCreated(b.created_at)}</p>
+              {b.message && <p class="sm:col-span-2 mt-1"><span class="text-ink-soft/60">Viesti:</span> {b.message}</p>}
+              {b.admin_note && <p class="sm:col-span-2 mt-1 text-gold"><span class="text-ink-soft/60">Muistiinpano:</span> {b.admin_note}</p>}
+            </div>
+
+            <form method="POST" action="/api/admin/booking-update" class="border-t border-taupe-deep/15 pt-4 space-y-3">
+              <input type="hidden" name="id" value={b.id} />
+              <div>
+                <label class="eyebrow !text-[0.58rem] block mb-1" for={`note-${b.id}`}>Muistiinpano / viesti asiakkaalle (valinnainen)</label>
+                <input
+                  id={`note-${b.id}`}
+                  type="text" name="admin_note" value={b.admin_note ?? ''}
+                  class="w-full bg-transparent border-b border-taupe-deep/40 py-2 text-sm focus:border-gold focus:outline-none"
+                  placeholder="Esim. vahvistettu klo 14:00"
+                />
+              </div>
+              <div class="flex flex-wrap gap-2 pt-1">
+                {b.status !== 'confirmed' && (
+                  <button name="action" value="confirm" class="btn btn-solid !py-2.5 !px-6 !text-[0.62rem] !bg-emerald-700 !border-emerald-700 hover:!bg-emerald-800">
+                    Hyväksy
+                  </button>
+                )}
+                {b.status !== 'declined' && (
+                  <button name="action" value="decline" class="btn btn-outline !py-2.5 !px-6 !text-[0.62rem]">
+                    Hylkää
+                  </button>
+                )}
+                <button
+                  name="action" value="delete"
+                  class="btn !py-2.5 !px-6 !text-[0.62rem] text-red-700 ml-auto hover:bg-red-50"
+                  onclick="return confirm('Poistetaanko varaus pysyvästi?');"
+                >
+                  Poista
+                </button>
+              </div>
+            </form>
+          </div>
+        </details>
+      ))}
+    </div>
+  )}
+
+  <!-- Data retention -->
+  <div class="mt-12 pt-8 border-t border-taupe-deep/20">
+    <h2 class="eyebrow !text-[0.62rem] mb-3">Tietojen poisto (GDPR)</h2>
+    <form method="POST" action="/api/admin/cleanup" class="flex items-center gap-3 flex-wrap">
+      <span class="text-sm text-ink-soft">Poista hylätyt ja vanhat vahvistetut varaukset, jotka ovat vanhempia kuin</span>
+      <input type="number" name="days" value="180" min="30" class="w-20 bg-transparent border-b border-taupe-deep/40 py-1 text-sm text-center focus:border-gold focus:outline-none" />
+      <span class="text-sm text-ink-soft">päivää.</span>
+      <button class="btn btn-outline !py-2 !px-5 !text-[0.6rem]" onclick="return confirm('Poistetaanko vanhat varaukset pysyvästi?');">Poista vanhat</button>
+    </form>
+  </div>
+</AdminLayout>

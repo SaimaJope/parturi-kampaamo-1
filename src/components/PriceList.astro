@@ -1,0 +1,44 @@
+---
+/**
+ * Elegant two-column price list with dotted leaders.
+ * The permanentti note is injected after the PERMANENTTI category.
+ */
+import Reveal from './Reveal.astro';
+import type { PriceRow } from '../lib/defaults';
+
+export interface Props {
+  groups: { category: string; items: PriceRow[] }[];
+  permNote?: string;
+}
+const { groups, permNote } = Astro.props;
+
+function fmtPrice(p: PriceRow): string {
+  if (p.price === null) return '';
+  // Finnish euro formatting: integer where whole, comma decimals otherwise.
+  const n = Number(p.price);
+  const str = Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+  return `${str} ${p.price_suffix ?? '€'}`;
+}
+---
+
+<div class="grid gap-x-16 gap-y-12 md:grid-cols-2">
+  {groups.map((group, i) => (
+    <Reveal class="break-inside-avoid" delay={(i % 2) * 80}>
+      <h3 class="eyebrow !text-[0.74rem] !text-gold !tracking-[0.24em] mb-5 pb-3 border-b border-taupe-deep/30">
+        {group.category}
+      </h3>
+      <ul class="space-y-3.5">
+        {group.items.map((item) => (
+          <li class="flex items-baseline gap-3">
+            <span class="font-serif text-lg text-ink-soft">{item.name}</span>
+            <span class="flex-1 border-b border-dotted border-taupe-deep/40 translate-y-[-3px]"></span>
+            <span class="font-serif text-lg text-ink whitespace-nowrap tabular-nums">{fmtPrice(item)}</span>
+          </li>
+        ))}
+      </ul>
+      {permNote && group.category.startsWith('PERMANENTTI') && (
+        <p class="mt-5 text-sm italic text-ink-soft/80">{permNote}</p>
+      )}
+    </Reveal>
+  ))}
+</div>
