@@ -1,0 +1,120 @@
+---
+/**
+ * Elegant first-load preloader: cream screen with the gold wordmark fading in
+ * over a thin shimmering gold line, then fades out once the page is ready.
+ *
+ * - Shows once per session (sessionStorage) so internal navigation doesn't replay it.
+ * - Colours are hardcoded (not theme vars) so it renders correctly before
+ *   global.css loads — no flash of an unstyled loader.
+ * - Reduced-motion safe; hidden entirely when JS is disabled (<noscript>).
+ */
+import { withBase } from '../lib/url';
+---
+
+<div id="sj-preloader" role="status" aria-label="Ladataan">
+  <img class="sj-pre__logo" src={withBase('/logo.png')} alt="Salon Janika" width="1884" height="835" />
+  <span class="sj-pre__bar" aria-hidden="true"></span>
+</div>
+
+<style is:inline>
+  #sj-preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #f5f0e8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.25rem;
+    opacity: 1;
+    transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.85s;
+  }
+  #sj-preloader.is-done {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .sj-pre__logo {
+    width: min(62vw, 230px);
+    height: auto;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: sjPreFade 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .sj-pre__bar {
+    position: relative;
+    width: 150px;
+    height: 1px;
+    background: rgba(169, 154, 134, 0.35);
+    overflow: hidden;
+  }
+  .sj-pre__bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 45%;
+    background: linear-gradient(90deg, transparent, #b8995e, transparent);
+    animation: sjPreSlide 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes sjPreFade {
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes sjPreSlide {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(360%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sj-pre__logo { animation: none; opacity: 1; transform: none; }
+    .sj-pre__bar::after { animation: none; width: 100%; opacity: 0.5; }
+    #sj-preloader { transition: opacity 0.25s; }
+  }
+</style>
+
+<noscript>
+  <style>#sj-preloader { display: none !important; }</style>
+</noscript>
+
+<script is:inline>
+  (function () {
+    var pre = document.getElementById('sj-preloader');
+    if (!pre) return;
+    var KEY = 'sj_seen';
+    var root = document.documentElement;
+
+    // Already shown this session → hide synchronously, no flash, no replay.
+    if (sessionStorage.getItem(KEY)) {
+      pre.style.display = 'none';
+      return;
+    }
+
+    var reduce =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.style.overflow = 'hidden'; // lock scroll while loading
+    var MIN = reduce ? 0 : 750; // minimum graceful display time
+    var start = (window.performance && performance.now()) || Date.now();
+    var finished = false;
+
+    function reveal() {
+      pre.classList.add('is-done');
+      root.style.overflow = '';
+      setTimeout(function () {
+        if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
+      }, 900);
+    }
+    function finish() {
+      if (finished) return;
+      finished = true;
+      sessionStorage.setItem(KEY, '1');
+      var now = (window.performance && performance.now()) || Date.now();
+      var wait = Math.max(0, MIN - (now - start));
+      setTimeout(reveal, wait);
+    }
+
+    if (document.readyState === 'complete') finish();
+    else window.addEventListener('load', finish);
+    // Safety net: never stay longer than 4s even if something stalls.
+    setTimeout(finish, 4000);
+  })();
+</script>
