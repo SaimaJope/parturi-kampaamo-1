@@ -4,6 +4,7 @@
  * placeholder tiles when no gallery images are configured yet.
  */
 import Reveal from './Reveal.astro';
+import { withBase } from '../lib/url';
 import type { GalleryImage } from '../lib/content';
 
 export interface Props {
@@ -29,7 +30,7 @@ const tiles =
   {tiles.map((t, i) => (
     <Reveal class="group relative aspect-square overflow-hidden bg-soft" delay={i * 60}>
       <img
-        src={t.src}
+        src={withBase(t.src)}
         alt={t.alt}
         loading="lazy"
         decoding="async"

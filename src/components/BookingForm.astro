@@ -5,6 +5,7 @@
  * - With JS: async submit, inline field errors, Finnish success state.
  * - Includes a hidden honeypot field ("website") for spam.
  */
+import { withBase } from '../lib/url';
 import type { PriceRow } from '../lib/defaults';
 
 export interface Props {
@@ -30,7 +31,7 @@ const labelCls = 'eyebrow !text-[0.64rem] block mb-1';
     <p class="font-serif text-2xl text-ink max-w-md mx-auto">
       Varauspyyntösi on vastaanotettu. Vahvistan ajan pian.
     </p>
-    <a href="/" class="btn btn-outline mt-10">Takaisin etusivulle</a>
+    <a href={withBase('/')} class="btn btn-outline mt-10">Takaisin etusivulle</a>
   </div>
 
   <!-- Form -->
@@ -104,7 +105,7 @@ const labelCls = 'eyebrow !text-[0.64rem] block mb-1';
       <input type="checkbox" name="consent_given" required class="mt-1 w-4 h-4 accent-[var(--color-ink)] shrink-0" />
       <span class="text-sm text-ink-soft leading-relaxed">
         Hyväksyn henkilötietojeni käsittelyn ajanvarausta varten.
-        <a href="/tietosuoja" class="underline decoration-gold underline-offset-2 hover:text-ink">Lue tietosuojaseloste</a>.
+        <a href={withBase('/tietosuoja')} class="underline decoration-gold underline-offset-2 hover:text-ink">Lue tietosuojaseloste</a>.
       </span>
     </label>
     <p class="err text-sm text-red-700 -mt-4 hidden" data-err="consent_given"></p>

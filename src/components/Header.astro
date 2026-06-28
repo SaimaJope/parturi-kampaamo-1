@@ -9,6 +9,8 @@
  *    be invisible).
  * Mobile uses a hamburger drawer plus a persistent tap-to-call affordance.
  */
+import { withBase, isActive } from '../lib/url';
+
 export interface Props {
   phone: string;
   phoneDisplay: string;
@@ -23,8 +25,6 @@ const nav = [
   { href: '/yhteystiedot', label: 'Yhteystiedot' },
   { href: '/ajanvaraus', label: 'Ajanvaraus' },
 ];
-const isActive = (href: string) =>
-  href === '/' ? path === '/' : path.startsWith(href);
 const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
 ---
 
@@ -35,9 +35,9 @@ const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
 >
   <div class="container-wide flex items-center justify-between py-3 md:py-4">
     <!-- Logo -->
-    <a href="/" class="block shrink-0" aria-label="Salon Janika — etusivu">
+    <a href={withBase('/')} class="block shrink-0" aria-label="Salon Janika — etusivu">
       <img
-        src="/logo.png"
+        src={withBase('/logo.png')}
         alt="Salon Janika — parturi-kampaamo"
         class="logo-img h-11 md:h-14 w-auto"
         width="1884"
@@ -50,9 +50,9 @@ const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
     <nav class="hidden lg:flex items-center gap-10" aria-label="Päävalikko">
       {nav.map((item) => (
         <a
-          href={item.href}
-          class:list={['nav-link eyebrow !text-[0.7rem] relative', isActive(item.href) ? 'active' : '']}
-          aria-current={isActive(item.href) ? 'page' : undefined}
+          href={withBase(item.href)}
+          class:list={['nav-link eyebrow !text-[0.7rem] relative', isActive(path, item.href) ? 'active' : '']}
+          aria-current={isActive(path, item.href) ? 'page' : undefined}
         >
           {item.label}
         </a>
@@ -84,10 +84,10 @@ const telHref = 'tel:+358' + phone.replace(/\D/g, '').replace(/^0/, '');
     <nav class="flex flex-col items-center gap-7" aria-label="Mobiilivalikko">
       {nav.map((item) => (
         <a
-          href={item.href}
+          href={withBase(item.href)}
           class:list={[
             'font-serif text-3xl tracking-tight transition-colors',
-            isActive(item.href) ? 'text-gold' : 'text-ink',
+            isActive(path, item.href) ? 'text-gold' : 'text-ink',
           ]}
         >
           {item.label}

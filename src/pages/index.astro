@@ -4,6 +4,7 @@ import SectionTitle from '../components/SectionTitle.astro';
 import Reveal from '../components/Reveal.astro';
 import Gallery from '../components/Gallery.astro';
 import { getContent, c, getGallery } from '../lib/content';
+import { withBase } from '../lib/url';
 
 const content = await getContent();
 const gallery = await getGallery();
@@ -21,7 +22,7 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
   <section class="relative h-[100svh] min-h-[600px] flex items-center justify-center overflow-hidden">
     <div class="absolute inset-0">
       <img
-        src="/images/hero.jpg"
+        src={withBase('/images/hero.jpg')}
         alt="Hiusten muotoilua Salon Janikassa"
         class="w-full h-full object-cover ken-burns photo"
         fetchpriority="high"
@@ -39,8 +40,8 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
         {c(content, 'hero_tagline')}
       </p>
       <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <a href="/ajanvaraus" class="btn btn-light">Varaa aika</a>
-        <a href="/hinnasto" class="btn btn-outline !border-cream/70 !text-cream hover:!bg-cream hover:!text-ink">Hinnasto</a>
+        <a href={withBase('/ajanvaraus')} class="btn btn-light">Varaa aika</a>
+        <a href={withBase('/hinnasto')} class="btn btn-outline !border-cream/70 !text-cream hover:!bg-cream hover:!text-ink">Hinnasto</a>
       </div>
     </div>
 
@@ -62,12 +63,12 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
           {c(content, 'etusivu_body')}
         </p>
         <div class="rule max-w-[8rem] my-9"></div>
-        <a href="/ajanvaraus" class="btn btn-outline">Varaa aika</a>
+        <a href={withBase('/ajanvaraus')} class="btn btn-outline">Varaa aika</a>
       </Reveal>
 
       <Reveal class="order-1 md:order-2" delay={120}>
         <div class="relative aspect-[4/5] overflow-hidden">
-          <img src="/images/about.jpg" alt="Kiharoiden muotoilua Salon Janikassa" loading="lazy" class="w-full h-full object-cover photo" />
+          <img src={withBase('/images/about.jpg')} alt="Kiharoiden muotoilua Salon Janikassa" loading="lazy" class="w-full h-full object-cover photo" />
         </div>
       </Reveal>
     </div>
@@ -81,7 +82,7 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
         <p class="font-serif text-2xl md:text-4xl leading-snug mt-4 max-w-3xl mx-auto text-cream/90">
           Käytän väreissä ja kiharoissa laadukkaita Wella-aineita.
         </p>
-        <a href="/hinnasto" class="btn btn-light mt-12">Katso palvelut</a>
+        <a href={withBase('/hinnasto')} class="btn btn-light mt-12">Katso palvelut</a>
       </Reveal>
     </div>
   </section>
@@ -91,7 +92,7 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
     <div class="container-wide grid gap-14 md:grid-cols-2 items-center">
       <Reveal>
         <div class="relative aspect-[5/4] overflow-hidden">
-          <img src="/images/contact.jpg" alt="Salon Janikan rauhallinen sisätila" loading="lazy" class="w-full h-full object-cover photo" />
+          <img src={withBase('/images/contact.jpg')} alt="Salon Janikan rauhallinen sisätila" loading="lazy" class="w-full h-full object-cover photo" />
         </div>
       </Reveal>
       <Reveal delay={120} class="md:pl-6">
@@ -107,7 +108,7 @@ const telHref = 'tel:+358' + c(content, 'phone').replace(/\D/g, '').replace(/^0/
           <p class="text-base">{c(content, 'open_weekday')} · {c(content, 'open_saturday')}</p>
         </address>
         <div class="mt-10 flex gap-4">
-          <a href="/yhteystiedot" class="btn btn-outline">Yhteystiedot</a>
+          <a href={withBase('/yhteystiedot')} class="btn btn-outline">Yhteystiedot</a>
         </div>
       </Reveal>
     </div>

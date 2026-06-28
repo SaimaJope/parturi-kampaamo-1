@@ -3,6 +3,8 @@
  * Footer present on every public page.
  * Required line: "ark. 10–18, la sopimuksen mukaan · 09 855 2757 · Mirjankuja 2, Matinkylä"
  */
+import { withBase } from '../lib/url';
+
 export interface Props {
   hours: string;
   phoneDisplay: string;
@@ -42,7 +44,7 @@ const year = 2025; // static; bump as needed
       <div class="md:text-right">
         <div class="eyebrow !text-cream/50 mb-4">Aukioloajat</div>
         <p class="text-sm text-cream/80">{hours}</p>
-        <a href="/ajanvaraus" class="btn btn-light mt-6">Varaa aika</a>
+        <a href={withBase('/ajanvaraus')} class="btn btn-light mt-6">Varaa aika</a>
       </div>
     </div>
 
@@ -51,7 +53,7 @@ const year = 2025; // static; bump as needed
         {hours} · {phoneDisplay} · {addressStreet}, {addressArea}
       </p>
       <div class="flex gap-5 text-xs text-cream/45">
-        <a href="/tietosuoja" class="hover:text-cream/80 transition-colors">Tietosuojaseloste</a>
+        <a href={withBase('/tietosuoja')} class="hover:text-cream/80 transition-colors">Tietosuojaseloste</a>
         <span>© {year} Salon Janika</span>
       </div>
     </div>
